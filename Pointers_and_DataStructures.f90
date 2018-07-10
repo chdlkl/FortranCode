@@ -181,7 +181,7 @@ Program linked_list
   implicit none
   Type :: real_value
     real :: val
-    type( real_value ), pointer :: p
+    type( real_value ), pointer :: next
   End type real_value
   
   Type( real_value ), pointer :: head, tail, ptr
@@ -200,13 +200,13 @@ Program linked_list
       if ( .not.associated(head) ) then  !.. no value in list
         allocate( head, stat = istat )  !.. allocate the new value
         tail => head  !.. tail points to the new value
-        nullify( tail%p )
+        nullify( tail%next )
         tail%val = temp  !.. store data
       else  !.. value already in list
-        allocate( tail%p, stat = istat )  !.. allocate new value
-        tail => tail%p  !.. tail points to new value
+        allocate( tail%next, stat = istat )  !.. allocate new value
+        tail => tail%next  !.. tail points to new value
         tail%val = temp  !.. store data
-        nullify( tail%p )
+        nullify( tail%next )
       end if
     End do
     
@@ -215,7 +215,7 @@ Program linked_list
     do
       If ( .not.associated(ptr) ) exit
       write( *,'(1x,f10.4)' ) ptr%val
-      ptr => ptr%p
+      ptr => ptr%next
     end do
   else
     write( *,'(1x,a,I6)' ) 'file open failed--status = ', istat
