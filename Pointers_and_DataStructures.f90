@@ -167,7 +167,7 @@ Program mem_leak  !.. 一般来说, 动态指针才会造成内存泄漏
   write( *,'(1x,a,*(I3))' ) 'ptr2 = ', ptr2
   
   deallocate( ptr2, stat = istat )  !.. 与可分配数组不同，这里不叫释放内存，而是置空指针，置空后不需要重新分配内存，只需要重新进行指向即可
-  ptr2 => ptr1  !.. 此处ptr2的指向改变，所以ptr2先前指向的内存无法访问，造成内存泄漏。应该先deallocate(ptr2),再重新allocate(ptr2)
+  ptr2 => ptr1  !.. 此处ptr2的指向改变，所以ptr2先前指向的内存无法访问，造成内存泄漏。应该先deallocate(ptr2),不必再allocate(ptr2)
   write( *,'(1x,a,*(I3))' ) 'ptr1 = ', ptr1  !.. write out data
   write( *,'(1x,a,*(I3))' ) 'ptr2 = ', ptr2
   
