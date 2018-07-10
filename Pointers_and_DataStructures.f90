@@ -143,35 +143,82 @@
 !End program main
 
 !.. 使用指针的动态内存分配
-Program mem_leak  !.. 一般来说, 动态指针才会造成内存泄漏
+!Program mem_leak  !.. 一般来说, 动态指针才会造成内存泄漏
+!  implicit none
+!  Integer :: i, istat
+!  Integer, parameter :: n = 10
+!  Integer, pointer :: ptr1(:), ptr2(:)
+!  
+!  !.. check associated status of ptrs
+!  write( *,'(1x,a,2L5)' ) 'Are ptr1, ptr2 associated?', &
+!  associated( ptr1 ), associated( ptr2 )
+!  
+!  !.. allocate and initialize memory
+!  allocate( ptr1(n), stat = istat )
+!  allocate( ptr2(n), stat = istat )
+!  ptr1 = [ ( i, i = 1, n ) ]
+!  ptr2 = [ ( i, i = 11, n+10 ) ]
+!  
+!  !.. check associated status of ptrs
+!  write( *,'(1x,a,2L5)' ) 'Are ptr1, ptr2 associated?', &
+!  associated( ptr1 ), associated( ptr2 )
+!  
+!  write( *,'(1x,a,*(I3))' ) 'ptr1 = ', ptr1  !.. write out data
+!  write( *,'(1x,a,*(I3))' ) 'ptr2 = ', ptr2
+!  
+!  deallocate( ptr2, stat = istat )  !.. 与可分配数组不同，这里不叫释放内存，而是置空指针，置空后不需要重新分配内存，只需要重新进行指向即可
+!  ptr2 => ptr1  !.. 此处ptr2的指向改变，所以ptr2先前指向的内存无法访问，造成内存泄漏。应该先deallocate(ptr2),不必再allocate(ptr2)
+!  write( *,'(1x,a,*(I3))' ) 'ptr1 = ', ptr1  !.. write out data
+!  write( *,'(1x,a,*(I3))' ) 'ptr2 = ', ptr2
+!  
+!  deallocate( ptr2, stat = istat )  !.. deallocate memory
+!  nullify( ptr1 )  !.. nullify pointer
+!  
+!End program mem_leak
+
+!.. 链表
+Program linked_list
   implicit none
-  Integer :: i, istat
-  Integer, parameter :: n = 10
-  Integer, pointer :: ptr1(:), ptr2(:)
+  Type :: real_value
+    real :: val
+    type( real_value ), pointer :: p
+  End type real_value
   
-  !.. check associated status of ptrs
-  write( *,'(1x,a,2L5)' ) 'Are ptr1, ptr2 associated?', &
-  associated( ptr1 ), associated( ptr2 )
+  Type( real_value ), pointer :: head, tail, ptr
+  character(len=20) :: input
+  Integer :: nvals = 0, istat, fileid
+  real :: temp
   
-  !.. allocate and initialize memory
-  allocate( ptr1(n), stat = istat )
-  allocate( ptr2(n), stat = istat )
-  ptr1 = [ ( i, i = 1, n ) ]
-  ptr2 = [ ( i, i = 11, n+10 ) ]
+  write( *,'(1x,a)' ) 'Enter the file name with the data to be read:'
+  read( *,'(a)' ) input
+  open( newunit = fileid, file = trim(input), iostat = istat )
+  If ( istat == 0 ) then
+    do
+      read( fileid, *, iostat = istat ) temp  !.. get value
+      if ( istat /= 0 ) exit  !.. exit on end of data
+      nvals = nvals + 1  !.. the number od data
+      if ( .not.associated(head) ) then  !.. no value in list
+        allocate( head, stat = istat )  !.. allocate the new value
+        tail => head  !.. tail points to the new value
+        nullify( tail%p )
+        tail%val = temp  !.. store data
+      else  !.. value already in list
+        allocate( tail%p, stat = istat )  !.. allocate new value
+        tail => tail%p  !.. tail points to new value
+        tail%val = temp  !.. store data
+        nullify( tail%p )
+      end if
+    End do
+    
+    !.. write out data
+    ptr => head
+    do
+      If ( .not.associated(ptr) ) exit
+      write( *,'(1x,f10.4)' ) ptr%val
+      ptr => ptr%p
+    end do
+  else
+    write( *,'(1x,a,I6)' ) 'file open failed--status = ', istat
+  End if
   
-  !.. check associated status of ptrs
-  write( *,'(1x,a,2L5)' ) 'Are ptr1, ptr2 associated?', &
-  associated( ptr1 ), associated( ptr2 )
-  
-  write( *,'(1x,a,*(I3))' ) 'ptr1 = ', ptr1  !.. write out data
-  write( *,'(1x,a,*(I3))' ) 'ptr2 = ', ptr2
-  
-  deallocate( ptr2, stat = istat )  !.. 与可分配数组不同，这里不叫释放内存，而是置空指针，置空后不需要重新分配内存，只需要重新进行指向即可
-  ptr2 => ptr1  !.. 此处ptr2的指向改变，所以ptr2先前指向的内存无法访问，造成内存泄漏。应该先deallocate(ptr2),不必再allocate(ptr2)
-  write( *,'(1x,a,*(I3))' ) 'ptr1 = ', ptr1  !.. write out data
-  write( *,'(1x,a,*(I3))' ) 'ptr2 = ', ptr2
-  
-  deallocate( ptr2, stat = istat )  !.. deallocate memory
-  nullify( ptr1 )  !.. nullify pointer
-  
-End program mem_leak
+End program linked_list
